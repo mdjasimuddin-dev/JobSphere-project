@@ -47,13 +47,17 @@ async function run() {
         })
 
         app.post('/bid', async (req, res) => {
-            // const id = req.params.id
             const reqBody = req.body
             console.log(reqBody);
-            // const query = { _id: new ObjectId(id) }
-            // const result = await jobsCollection.findOne(query)
             const bids = await bidsCollection.insertOne(reqBody)
             res.status(200).send(bids)
+        })
+
+        app.post('/job', async (req, res) => {
+            const reqBody = req.body
+            console.log(reqBody);
+            const result = await jobsCollection.insertOne(reqBody)
+            res.status(200).send(result)
         })
 
     } finally {
