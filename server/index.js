@@ -60,6 +60,42 @@ async function run() {
             res.status(200).send(result)
         })
 
+        // get posted job by specific user 
+        app.get('/jobs/:email', async (req, res) => {
+            const email = req.params.email
+            const query = { 'buyer.email': email }
+            const result = await jobsCollection.find(query).toArray()
+            res.status(200).send(result)
+        })
+
+        // update job by specific id
+        app.patch('/job/:id', async (req, res) => {
+            const id = req.params.id
+            const query = { _id: new ObjectId(id) }
+            const result = await jobsCollection.updateOne(query)
+            res.status(200).send(result)
+        })
+
+        // delete job by specific id
+        app.delete('/job/:id', async (req, res) => {
+            const id = req.params.id
+            const query = { _id: new ObjectId(id) }
+            const result = await jobsCollection.deleteOne(query)
+            res.status(200).send(result)
+        })
+
+
+
+
+        // get posted job by specific user 
+        app.get('/bids/:email', async (req, res) => {
+            const email = req.params.email
+            const query = { email: email }
+            const result = await bidsCollection.find(query).toArray()
+            res.status(200).send(result)
+        })
+
+
     } finally {
         // Ensures that the client will close when you finish/error
         // await client.close();

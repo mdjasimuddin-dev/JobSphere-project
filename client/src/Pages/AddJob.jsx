@@ -46,7 +46,7 @@ const AddJob = () => {
       console.log(data);
       if (data?.insertedId) {
         toast.success("New Job Post Successful.");
-        navigate("/my-posted-job");
+        navigate("/my-posted-jobs");
       }
     } catch (error) {
       console.log(error);
