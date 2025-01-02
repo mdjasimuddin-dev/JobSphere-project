@@ -8,6 +8,7 @@ import JobDetails from "../Pages/JobDetails";
 import AddJob from "../Pages/AddJob";
 import MyPostedJobs from "../Pages/MyPostedJobs";
 import MyBids from "../Pages/MyBids";
+import UpdateJob from "../Pages/UpdateJob";
 
 const router = createBrowserRouter([
   {
@@ -46,6 +47,13 @@ const router = createBrowserRouter([
       {
         path: "/my-posted-jobs",
         element: <MyPostedJobs />,
+      },
+
+      {
+        path: "/update-job/:id",
+        element: <UpdateJob />,
+        loader: ({ params }) =>
+          fetch(`${import.meta.env.VITE_APP_URL}/job/${params.id}`),
       },
 
       {

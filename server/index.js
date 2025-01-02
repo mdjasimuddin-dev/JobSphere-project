@@ -48,14 +48,12 @@ async function run() {
 
         app.post('/bid', async (req, res) => {
             const reqBody = req.body
-            console.log(reqBody);
             const bids = await bidsCollection.insertOne(reqBody)
             res.status(200).send(bids)
         })
 
         app.post('/job', async (req, res) => {
             const reqBody = req.body
-            console.log(reqBody);
             const result = await jobsCollection.insertOne(reqBody)
             res.status(200).send(result)
         })
@@ -69,10 +67,20 @@ async function run() {
         })
 
         // update job by specific id
-        app.patch('/job/:id', async (req, res) => {
+        app.put('/job/:id', async (req, res) => {
             const id = req.params.id
+            const jobData = req.body
+            console.log(jobData);
             const query = { _id: new ObjectId(id) }
-            const result = await jobsCollection.updateOne(query)
+            const options = { upsert: true }
+
+            const updateDoc = {
+                $set: {
+                    ...jobData
+                }
+            }
+
+            const result = await jobsCollection.updateOne(query, updateDoc, options)
             res.status(200).send(result)
         })
 
