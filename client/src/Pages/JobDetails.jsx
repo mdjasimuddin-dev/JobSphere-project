@@ -1,5 +1,5 @@
 import { useContext, useState } from "react";
-import { useLoaderData } from "react-router-dom";
+import { useLoaderData, useNavigate } from "react-router-dom";
 import { AuthContext } from "../Provider/AuthProvider";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -10,15 +10,17 @@ const JobDetails = () => {
   const { user } = useContext(AuthContext);
   const [startDate, setStartDate] = useState(new Date());
   const job = useLoaderData();
+  const navigate = useNavigate();
+
   const {
-    deadline,
-    category,
+    _id,
     job_title,
     description,
-    buyer,
     min_price,
     max_price,
-    _id,
+    category,
+    deadline,
+    buyer,
   } = job;
 
   const handleFormSubmission = async (e) => {
@@ -26,27 +28,30 @@ const JobDetails = () => {
 
     if (user?.email === buyer?.email)
       return toast.error("Action not permitted!");
-    const jobId = _id;
     const form = e.target;
+    const jobId = _id;
     const price = parseFloat(form.price.value);
-    if (price < min_price)
-      return toast.error("Offer more or at least equal to minimum price.");
-    if (price > max_price)
-      return toast.error("Offer less then or at least equal to maximum price.");
+    if (price < parseFloat(min_price))
+      return toast.error("Offer more or at least equal to Minimum Price.");
+    if (price > parseFloat(max_price))
+      return toast.error("Offer less then or at least equal to Maximum Price.");
     const deadline = startDate;
-    const email = form.email.value;
+    const email = user?.email;
     const comment = form.comment.value;
     const buyer_email = buyer?.email;
     const status = "Pending";
 
     const bidData = {
       jobId,
+      job_title,
+      category,
       price,
       email,
       comment,
       deadline,
       buyer_email,
       status,
+      buyer,
     };
 
     console.table(bidData);
@@ -56,11 +61,12 @@ const JobDetails = () => {
         bidData
       );
       console.log(data);
-      if (data?.insertedId) {
-        toast.success("Bid request successful.");
-      }
-    } catch (error) {
-      console.log(error);
+      toast.success("Bid Placed Successfully!");
+      navigate("/my-bids");
+    } catch (err) {
+      console.log(err);
+      toast.error(err.response.data);
+      e.target.reset();
     }
   };
 

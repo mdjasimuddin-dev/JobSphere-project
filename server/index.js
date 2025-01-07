@@ -95,11 +95,36 @@ async function run() {
 
 
 
-        // get posted job by specific user 
-        app.get('/bids/:email', async (req, res) => {
+        // get my-bids by specific user 
+        app.get('/my-bids/:email', async (req, res) => {
             const email = req.params.email
-            const query = { email: email }
+            const query = { email }
             const result = await bidsCollection.find(query).toArray()
+            res.status(200).send(result)
+        })
+
+        // get bid-request by specific user 
+        app.get('/bid-request/:email', async (req, res) => {
+            const email = req.params.email
+            const query = { buyer_email: email }
+            const result = await bidsCollection.find(query).toArray()
+            res.status(200).send(result)
+        })
+
+        // status update by id 
+        app.patch('/bid-status/:id', async (req, res) => {
+            const id = req.params.id
+            const reqBody = req.body
+            const query = { _id: new ObjectId(id) }
+            const options = { upsert: true }
+
+            const updateDoc = {
+                $set: {
+                    status: reqBody.currentStatus
+                }
+            }
+
+            const result = await bidsCollection.updateOne(query, updateDoc, options)
             res.status(200).send(result)
         })
 
