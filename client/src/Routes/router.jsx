@@ -42,7 +42,7 @@ const router = createBrowserRouter([
           </PrivateRoute>
         ),
         loader: ({ params }) =>
-          fetch(`${import.meta.env.VITE_APP_URL}/job/${params.id}`),
+          fetch(`${import.meta.env.VITE_APP_URL}/job/${params.id}`, {credentials : 'include'}),
       },
 
       {

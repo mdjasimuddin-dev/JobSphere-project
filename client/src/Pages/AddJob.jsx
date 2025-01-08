@@ -41,7 +41,7 @@ const AddJob = () => {
     try {
       const { data } = await axios.post(
         `${import.meta.env.VITE_APP_URL}/job`,
-        jobData
+        jobData, {withCredentials : true}
       );
       console.log(data);
       if (data?.insertedId) {

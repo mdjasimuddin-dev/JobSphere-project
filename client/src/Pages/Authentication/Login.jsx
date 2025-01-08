@@ -4,6 +4,7 @@ import { AuthContext } from "../../Provider/AuthProvider";
 import bgImg from "../../assets/images/login.jpg";
 import logo from "../../assets/images//logo.png";
 import { toast } from "react-hot-toast";
+import axios from "axios";
 
 const Login = () => {
   const { signIn, signInWithGoogle, user, loading } = useContext(AuthContext);

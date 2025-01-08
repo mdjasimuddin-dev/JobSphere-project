@@ -58,7 +58,7 @@ const JobDetails = () => {
     try {
       const { data } = await axios.post(
         `${import.meta.env.VITE_APP_URL}/bid`,
-        bidData
+        bidData, {withCredentials : true}
       );
       console.log(data);
       toast.success("Bid Placed Successfully!");

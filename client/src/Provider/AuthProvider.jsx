@@ -11,6 +11,7 @@ import {
   updateProfile,
 } from "firebase/auth";
 import { app } from "../firebase/firebase.config";
+import axios from "axios";
 
 export const AuthContext = createContext(null);
 const auth = getAuth(app);
@@ -51,6 +52,23 @@ const AuthProvider = ({ children }) => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
+      const userEmail = { email: currentUser?.email };
+
+      if (currentUser) {
+        const { data } = axios.post(
+          `${import.meta.env.VITE_APP_URL}/jwt`,
+          userEmail,
+          { withCredentials: true }
+        );
+        console.log(data);
+      } else {
+        const { data } = axios.get(`${import.meta.env.VITE_APP_URL}/logout`, {
+          withCredentials: true,
+        });
+
+        console.log(data);
+      }
+
       console.log("CurrentUser-->", currentUser);
       setLoading(false);
     });

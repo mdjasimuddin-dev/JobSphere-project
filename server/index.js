@@ -3,6 +3,8 @@ const cors = require('cors')
 require('dotenv').config()
 const port = process.env.PORT || 9000
 const { MongoClient, ObjectId } = require("mongodb");
+const jwt = require('jsonwebtoken')
+const cookieParser = require('cookie-parser')
 
 
 const app = express()
@@ -16,6 +18,7 @@ const corsOptions = {
 
 app.use(cors(corsOptions))
 app.use(express.json())
+app.use(cookieParser())
 
 
 app.get('/', (req, res) => {
@@ -34,13 +37,64 @@ async function run() {
 
 
 
+        // jwt token create 
+        app.post('/jwt', async (req, res) => {
+            const user = req.body
+            const token = await jwt.sign(user, process.env.TOKEN_SECRET_KEY, {
+                expiresIn: '7d'
+            })
+            res.cookie('jobSphere', token, {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict'
+            })
+                .send({ token, message: "token create successful." })
+        })
+
+
+
+
+
+        // Token verify middleware
+        const tokenVerify = (req, res, next) => {
+            //    step-01 : Token received
+            const token = req.cookies.jobSphere
+
+            //    step-02 : Token don't received
+            if (!token) {
+                return res.status(403).send({ message: "Unauthorize access!" })
+            }
+
+            //    step-03 : Token verify && next step start
+            jwt.verify(token, process.env.TOKEN_SECRET_KEY, (err, decode) => {
+                if (err) {
+                    return res.status(403).send({ message: "Unauthorize access!" })
+                } else {
+                    req.user = decode;
+                    next()
+                }
+            })
+        }
+
+        app.get('/logout', async (req, res) => {
+            res.clearCookie('jobSphere', {
+                httpOnly: true,
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict',
+                maxAge: 0
+            })
+                .send({ message: "token remove done." })
+        })
+
+
+
         app.get('/jobs', async (req, res) => {
             const result = await jobsCollection.find().toArray()
             res.status(200).send(result)
         })
 
         app.get('/job/:id', async (req, res) => {
-            const id = req.params.id
+            const id = req?.params?.id
             const query = { _id: new ObjectId(id) }
             const result = await jobsCollection.findOne(query)
             res.status(200).send(result)
@@ -58,12 +112,22 @@ async function run() {
             res.status(200).send(result)
         })
 
-        // get posted job by specific user 
-        app.get('/jobs/:email', async (req, res) => {
-            const email = req.params.email
-            const query = { 'buyer.email': email }
-            const result = await jobsCollection.find(query).toArray()
-            res.status(200).send(result)
+        // ===> Protected Route : get my-posted-job by specific user  
+        app.get('/jobs/:email', tokenVerify, async (req, res) => {
+            const tokenValue = req?.user?.email
+            const email = req?.params?.email
+
+            try {
+                if (tokenValue !== email) {
+                    return res.status(403).send({ message: "Forbidden access!" })
+                }
+
+                const query = { 'buyer.email': email }
+                const result = await jobsCollection.find(query).toArray()
+                res.status(200).send(result)
+            } catch (error) {
+                return res.status(404).send({ message: "something is wrong!" })
+            }
         })
 
         // update job by specific id
@@ -95,20 +159,36 @@ async function run() {
 
 
 
-        // get my-bids by specific user 
-        app.get('/my-bids/:email', async (req, res) => {
-            const email = req.params.email
-            const query = { email }
-            const result = await bidsCollection.find(query).toArray()
-            res.status(200).send(result)
+        // ===> Protected Route : get my-bids by specific user 
+        app.get('/my-bids/:email', tokenVerify, async (req, res) => {
+            const email = req?.params?.email
+            const tokenEmail = req?.user?.email
+            try {
+                if (email !== tokenEmail) {
+                    return res.status(403).send({ message: 'Forbidden access!' })
+                }
+                const query = { email }
+                const result = await bidsCollection.find(query).toArray()
+                res.status(200).send(result)
+            } catch (error) {
+                return res.status(404).send({ message: "something is wrong" })
+            }
         })
 
-        // get bid-request by specific user 
+        // ===> Protected Route : get bid-request by specific user 
         app.get('/bid-request/:email', async (req, res) => {
-            const email = req.params.email
-            const query = { buyer_email: email }
-            const result = await bidsCollection.find(query).toArray()
-            res.status(200).send(result)
+            const email = req?.params?.email
+            const tokenEmail = req?.user?.email
+            try {
+                if (email !== tokenEmail) {
+                    return res.status(403).send({ message: 'Forbidden access!' })
+                }
+                const query = { buyer_email: email }
+                const result = await bidsCollection.find(query).toArray()
+                res.status(200).send(result)
+            } catch (error) {
+                return res.status(404).send({ message: "something is wrong" })
+            }
         })
 
         // status update by id 

@@ -13,7 +13,9 @@ const BidRequests = () => {
 
   const getData = async () => {
     const { data } = await axios.get(
-      `${import.meta.env.VITE_APP_URL}/bid-request/${user?.email}`
+      `${import.meta.env.VITE_APP_URL}/bid-request/${user?.email}`, {
+        withCredentials : true
+      }
     );
     setBidsRequest(data);
   };

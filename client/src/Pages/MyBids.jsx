@@ -12,7 +12,7 @@ const MyBids = () => {
 
   const getData = async () => {
     const { data } = await axios.get(
-      `${import.meta.env.VITE_APP_URL}/my-bids/${user?.email}`
+      `${import.meta.env.VITE_APP_URL}/my-bids/${user?.email}`, {withCredentials : true}
     );
     setBids(data);
   };
@@ -20,7 +20,7 @@ const MyBids = () => {
   const handleStatus = async (id, currentStatus) => {
     const { data } = await axios.patch(
       `${import.meta.env.VITE_APP_URL}/bid-status/${id}`,
-      { currentStatus }
+      { currentStatus },
     );
 
     console.log(data);

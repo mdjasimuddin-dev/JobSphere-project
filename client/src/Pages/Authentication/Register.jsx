@@ -4,6 +4,7 @@ import logo from "../../assets/images/logo.png";
 import { useContext, useEffect } from "react";
 import { AuthContext } from "../../Provider/AuthProvider";
 import toast from "react-hot-toast";
+import axios from "axios";
 
 const Registration = () => {
   const {
@@ -14,7 +15,7 @@ const Registration = () => {
     signInWithGoogle,
     updateUserProfile,
   } = useContext(AuthContext);
-  
+
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state;
@@ -39,9 +40,10 @@ const Registration = () => {
     const password = e.target.password.value;
 
     try {
-      await createUser(email, password);
+      const result = await createUser(email, password);
       await updateUserProfile(name, photo);
-      setUser({ ...user, photoURL: photo, displayName: name });
+      // Optimistic UI Update
+      setUser({ ...result?.user, photoURL: photo, displayName: name });
       toast.success("User signup successful.");
       navigate(from, { replace: true });
     } catch (err) {
