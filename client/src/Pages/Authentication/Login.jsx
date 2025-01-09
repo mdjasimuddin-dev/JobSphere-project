@@ -1,26 +1,34 @@
 import { useContext, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { AuthContext } from "../../Provider/AuthProvider";
 import bgImg from "../../assets/images/login.jpg";
 import logo from "../../assets/images//logo.png";
 import { toast } from "react-hot-toast";
-import axios from "axios";
+import { AuthContext } from "../../Provider/AuthProvider";
 
 const Login = () => {
   const { signIn, signInWithGoogle, user, loading } = useContext(AuthContext);
   const navigate = useNavigate();
   const location = useLocation();
+
+  useEffect(() => {
+    if (user) {
+      return navigate("/");
+    }
+  }, [navigate, user]);
   const from = location.state || "/";
 
   // Google sign in
   const handleGoogleSignIn = async () => {
     try {
-      await signInWithGoogle();
+      // 1. google sign in from firebase
+      const result = await signInWithGoogle();
+      console.log(result.user);
+
       toast.success("Sign In Successful");
       navigate(from, { replace: true });
     } catch (err) {
       console.log(err);
-      toast.error("Sign In failed");
+      toast.error(err?.message);
     }
   };
 
@@ -30,20 +38,15 @@ const Login = () => {
     const email = e.target.email.value;
     const password = e.target.password.value;
     try {
-      await signIn(email, password);
+      const result = await signIn(email, password);
+      console.log(result?.user);
       toast.success("Sign In Successful");
       navigate(from, { replace: true });
     } catch (err) {
       console.log(err);
-      toast.error("Sign In failed");
+      toast.error(err.message);
     }
   };
-
-  useEffect(() => {
-    if (user) {
-      return navigate("/");
-    }
-  }, [navigate, user]);
 
   if (user || loading) return;
   return (

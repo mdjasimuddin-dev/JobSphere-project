@@ -12,6 +12,7 @@ import {
 } from "firebase/auth";
 import { app } from "../firebase/firebase.config";
 import axios from "axios";
+import useAxiosPublic from "../hooks/useAxiosPublic";
 
 export const AuthContext = createContext(null);
 const auth = getAuth(app);
@@ -20,6 +21,7 @@ const googleProvider = new GoogleAuthProvider();
 const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const axiosPublic = useAxiosPublic();
 
   const createUser = (email, password) => {
     setLoading(true);
@@ -55,14 +57,13 @@ const AuthProvider = ({ children }) => {
       const userEmail = { email: currentUser?.email };
 
       if (currentUser) {
-        const { data } = axios.post(
-          `${import.meta.env.VITE_APP_URL}/jwt`,
-          userEmail,
-          { withCredentials: true }
+        const { data } = axiosPublic.post(
+          `http://localhost:9000/jwt`,
+          userEmail
         );
         console.log(data);
       } else {
-        const { data } = axios.get(`${import.meta.env.VITE_APP_URL}/logout`, {
+        const { data } = axios.get(`${import.meta.env.VITE_API_URL}/logout`, {
           withCredentials: true,
         });
 

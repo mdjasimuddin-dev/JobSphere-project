@@ -4,7 +4,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { useLoaderData, useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import axios from "axios";
+import useAxiosSecure from "../hooks/useAxiosSecure";
 
 const UpdateJob = () => {
   const { user } = useContext(AuthContext);
@@ -13,6 +13,7 @@ const UpdateJob = () => {
   const { job_title, min_price, max_price, description, _id } = jobData;
   const [startDate, setStartDate] = useState(new Date());
   const [category, setCategory] = useState("");
+  const axiosSecure = useAxiosSecure();
 
   //   console.log(jobData);
 
@@ -42,10 +43,7 @@ const UpdateJob = () => {
     };
 
     try {
-      const { data } = await axios.put(
-        `${import.meta.env.VITE_APP_URL}/job/${_id}`,
-        jobData
-      );
+      const { data } = await axiosSecure.put(`/job/${_id}`, jobData);
       console.log(data);
       if (data?.modifiedCount > 0) {
         toast.success("Job Update Successful.");

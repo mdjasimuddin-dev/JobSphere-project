@@ -3,14 +3,15 @@ import { useLoaderData, useNavigate } from "react-router-dom";
 import { AuthContext } from "../Provider/AuthProvider";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import axios from "axios";
 import toast from "react-hot-toast";
+import useAxiosSecure from "../hooks/useAxiosSecure";
 
 const JobDetails = () => {
   const { user } = useContext(AuthContext);
   const [startDate, setStartDate] = useState(new Date());
   const job = useLoaderData();
   const navigate = useNavigate();
+  const axiosSecure = useAxiosSecure();
 
   const {
     _id,
@@ -56,10 +57,9 @@ const JobDetails = () => {
 
     console.table(bidData);
     try {
-      const { data } = await axios.post(
-        `${import.meta.env.VITE_APP_URL}/bid`,
-        bidData, {withCredentials : true}
-      );
+      const { data } = await axiosSecure.post(`/bid`, bidData, {
+        withCredentials: true,
+      });
       console.log(data);
       toast.success("Bid Placed Successfully!");
       navigate("/my-bids");
@@ -89,7 +89,7 @@ const JobDetails = () => {
           </h1>
 
           <p title={description} className="mt-2 text-lg text-gray-600 ">
-            {description.substring(0, 70)}
+            {description?.substring(0, 70)}
           </p>
           <p className="mt-6 text-sm font-bold text-gray-600 ">
             Buyer Details:
@@ -97,7 +97,7 @@ const JobDetails = () => {
           <div className="flex items-center gap-5">
             <div>
               <p className="mt-2 text-sm  text-gray-600 ">
-                Name : {buyer.name}.
+                Name : {buyer?.name}.
               </p>
               <p className="mt-2 text-sm  text-gray-600 ">
                 Email : {buyer?.email}

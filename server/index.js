@@ -21,9 +21,27 @@ app.use(express.json())
 app.use(cookieParser())
 
 
-app.get('/', (req, res) => {
-    res.send("JobSphere Server Running Start")
-})
+// Token verify middleware
+const tokenVerify = (req, res, next) => {
+    const token = req?.cookies?.jobSphere
+    if (!token) {
+        return res.status(401).send({ message: "Unauthorize access!" })
+    }
+    if (token) {
+        jwt.verify(token, process.env.TOKEN_SECRET_KEY, (err, decode) => {
+            if (err) {
+                console.log("JWT Verification Error:", err.message);
+                return res.status(401).send({ message: 'unauthorized access' })
+            }
+            console.log(decode);
+            req.user = decode;
+            next()
+        })
+    }
+}
+
+
+
 
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.wukjrsy.mongodb.net/`
@@ -38,9 +56,9 @@ async function run() {
 
 
         // jwt token create 
-        app.post('/jwt', async (req, res) => {
+        app.post('/jwt', (req, res) => {
             const user = req.body
-            const token = await jwt.sign(user, process.env.TOKEN_SECRET_KEY, {
+            const token = jwt.sign(user, process.env.TOKEN_SECRET_KEY, {
                 expiresIn: '7d'
             })
             res.cookie('jobSphere', token, {
@@ -48,33 +66,9 @@ async function run() {
                 secure: process.env.NODE_ENV === 'production',
                 sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'strict'
             })
-                .send({ token, message: "token create successful." })
+                .send({ token })
         })
 
-
-
-
-
-        // Token verify middleware
-        const tokenVerify = (req, res, next) => {
-            //    step-01 : Token received
-            const token = req.cookies.jobSphere
-
-            //    step-02 : Token don't received
-            if (!token) {
-                return res.status(403).send({ message: "Unauthorize access!" })
-            }
-
-            //    step-03 : Token verify && next step start
-            jwt.verify(token, process.env.TOKEN_SECRET_KEY, (err, decode) => {
-                if (err) {
-                    return res.status(403).send({ message: "Unauthorize access!" })
-                } else {
-                    req.user = decode;
-                    next()
-                }
-            })
-        }
 
         app.get('/logout', async (req, res) => {
             res.clearCookie('jobSphere', {
@@ -88,46 +82,47 @@ async function run() {
 
 
 
+        // find all job data
         app.get('/jobs', async (req, res) => {
             const result = await jobsCollection.find().toArray()
             res.status(200).send(result)
         })
 
+        // Job Details
         app.get('/job/:id', async (req, res) => {
-            const id = req?.params?.id
+            const id = req.params.id
             const query = { _id: new ObjectId(id) }
             const result = await jobsCollection.findOne(query)
             res.status(200).send(result)
         })
 
-        app.post('/bid', async (req, res) => {
-            const reqBody = req.body
-            const bids = await bidsCollection.insertOne(reqBody)
-            res.status(200).send(bids)
-        })
-
+        // add new job data 
         app.post('/job', async (req, res) => {
             const reqBody = req.body
             const result = await jobsCollection.insertOne(reqBody)
             res.status(200).send(result)
         })
 
-        // ===> Protected Route : get my-posted-job by specific user  
+        // bid data store in database 
+        app.post('/bid', async (req, res) => {
+            const reqBody = req.body
+            const bids = await bidsCollection.insertOne(reqBody)
+            res.status(200).send(bids)
+        })
+
+        // ===> Protect : get my-posted-job by specific user  
         app.get('/jobs/:email', tokenVerify, async (req, res) => {
             const tokenValue = req?.user?.email
-            const email = req?.params?.email
+            const email = req.params?.email
 
-            try {
-                if (tokenValue !== email) {
-                    return res.status(403).send({ message: "Forbidden access!" })
-                }
-
-                const query = { 'buyer.email': email }
-                const result = await jobsCollection.find(query).toArray()
-                res.status(200).send(result)
-            } catch (error) {
-                return res.status(404).send({ message: "something is wrong!" })
+            if (tokenValue !== email) {
+                return res.status(403).send({ message: "Forbidden access!" })
             }
+
+            const query = { 'buyer.email': email }
+            const result = await jobsCollection.find(query).toArray()
+            res.status(200).send(result)
+
         })
 
         // update job by specific id
@@ -163,32 +158,28 @@ async function run() {
         app.get('/my-bids/:email', tokenVerify, async (req, res) => {
             const email = req?.params?.email
             const tokenEmail = req?.user?.email
-            try {
-                if (email !== tokenEmail) {
-                    return res.status(403).send({ message: 'Forbidden access!' })
-                }
-                const query = { email }
-                const result = await bidsCollection.find(query).toArray()
-                res.status(200).send(result)
-            } catch (error) {
-                return res.status(404).send({ message: "something is wrong" })
+
+            if (email !== tokenEmail) {
+                return res.status(403).send({ message: 'Forbidden access!' })
             }
+            const query = { email }
+            const result = await bidsCollection.find(query).toArray()
+            res.status(200).send(result)
+
         })
 
         // ===> Protected Route : get bid-request by specific user 
-        app.get('/bid-request/:email', async (req, res) => {
+        app.get('/bid-request/:email', tokenVerify, async (req, res) => {
             const email = req?.params?.email
             const tokenEmail = req?.user?.email
-            try {
-                if (email !== tokenEmail) {
-                    return res.status(403).send({ message: 'Forbidden access!' })
-                }
-                const query = { buyer_email: email }
-                const result = await bidsCollection.find(query).toArray()
-                res.status(200).send(result)
-            } catch (error) {
-                return res.status(404).send({ message: "something is wrong" })
+
+            if (email !== tokenEmail) {
+                return res.status(403).send({ message: 'Forbidden access!' })
             }
+            const query = { buyer_email: email }
+            const result = await bidsCollection.find(query).toArray()
+            res.status(200).send(result)
+
         })
 
         // status update by id 
@@ -215,6 +206,11 @@ async function run() {
     }
 }
 run().catch(console.dir);
+
+
+app.get('/', (req, res) => {
+    res.send("JobSphere Server Running Start")
+})
 
 
 

@@ -2,18 +2,20 @@ import { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../Provider/AuthProvider";
 import axios from "axios";
 import toast from "react-hot-toast";
+import useAxiosSecure from "../hooks/useAxiosSecure";
 
 const BidRequests = () => {
   const [bidsRequest, setBidsRequest] = useState([]);
   const { user } = useContext(AuthContext);
+  const axiosSecure = useAxiosSecure()
 
   useEffect(() => {
     getData();
   }, [user]);
 
   const getData = async () => {
-    const { data } = await axios.get(
-      `${import.meta.env.VITE_APP_URL}/bid-request/${user?.email}`, {
+    const { data } = await axiosSecure.get(
+      `/bid-request/${user?.email}`, {
         withCredentials : true
       }
     );
@@ -21,12 +23,11 @@ const BidRequests = () => {
   };
 
   const handleStatus = async (id, prevStatus, currentStatus) => {
-    console.log(id, prevStatus, currentStatus);
     if (prevStatus === currentStatus)
       return toast.error("Status already updated!");
 
-    const { data } = await axios.patch(
-      `${import.meta.env.VITE_APP_URL}/bid-status/${id}`,
+    const { data } = await axiosSecure.patch(
+      `/bid-status/${id}`,
       { currentStatus }
     );
 

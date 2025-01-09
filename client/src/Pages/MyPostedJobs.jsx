@@ -1,30 +1,27 @@
 import { useContext, useEffect, useState } from "react";
 import { AuthContext } from "../Provider/AuthProvider";
-import axios from "axios";
 import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
+import useAxiosSecure from "../hooks/useAxiosSecure";
 
 const MyPostedJobs = () => {
-  const [jobs, setJobs] = useState([]);
   const { user } = useContext(AuthContext);
+  const axiosSecure = useAxiosSecure();
+  const [jobs, setJobs] = useState([]);
 
   useEffect(() => {
     getData();
   }, [user]);
 
   const getData = async () => {
-    const { data } = await axios.get(
-      `${import.meta.env.VITE_APP_URL}/jobs/${user?.email}`,
-      { withCredentials: true }
-    );
+    const { data } = await axiosSecure(`/jobs/${user?.email}`);
     setJobs(data);
   };
 
   const handleDelete = async (id) => {
     try {
-      const { data } = await axios.delete(
-        `${import.meta.env.VITE_APP_URL}/job/${id}`
-      );
+      const { data } = await axiosSecure.delete(`/job/${id}`);
+      console.log(data);
       if (data.deletedCount > 0) {
         toast.success("Job Delete Successful.");
 
@@ -37,8 +34,8 @@ const MyPostedJobs = () => {
         // setJobs(remaining);
       }
     } catch (err) {
-      console.log(err);
-      toast.error("Something is wrong!");
+      console.log(err.message);
+      toast.error(err.message);
     }
   };
 
@@ -50,7 +47,7 @@ const MyPostedJobs = () => {
         <h2 className="text-lg font-medium text-gray-800 ">My Posted Jobs</h2>
 
         <span className="px-3 py-1 text-xs text-blue-600 bg-blue-100 rounded-full ">
-          {jobs.length} Jobs
+          {jobs?.length} Jobs
         </span>
       </div>
 
