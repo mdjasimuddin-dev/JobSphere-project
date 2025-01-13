@@ -106,6 +106,18 @@ async function run() {
         // bid data store in database 
         app.post('/bid', async (req, res) => {
             const reqBody = req.body
+            console.log(reqBody);
+
+            const query = {
+                email: reqBody.email,
+                jobId: reqBody.jobId
+            }
+
+            const alreadyApplied = await bidsCollection.findOne(query)
+
+            if (alreadyApplied) {
+                return res.status(400).send({ message: "You have already placed bid on this job" })
+            }
             const bids = await bidsCollection.insertOne(reqBody)
             res.status(200).send(bids)
         })
