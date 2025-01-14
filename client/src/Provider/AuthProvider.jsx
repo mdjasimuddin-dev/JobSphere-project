@@ -57,15 +57,16 @@ const AuthProvider = ({ children }) => {
       const userEmail = { email: currentUser?.email };
 
       if (currentUser) {
-        const { data } = axiosPublic.post(
-          `http://localhost:9000/jwt`,
-          userEmail
-        );
+        const { data } = axiosPublic.post(`/jwt`, userEmail);
         console.log(data);
       } else {
-        const { data } = axios.get(`${import.meta.env.VITE_API_URL}/logout`, {
-          withCredentials: true,
-        });
+        const { data } = axios.get(
+          `${import.meta.env.VITE_APP_URL}/logout`,
+          {},
+          {
+            withCredentials: true,
+          }
+        );
 
         console.log(data);
       }

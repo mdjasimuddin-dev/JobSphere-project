@@ -10,7 +10,11 @@ const cookieParser = require('cookie-parser')
 const app = express()
 
 const corsOptions = {
-    origin: ["http://localhost:5173", "http://localhost:5174"],
+    origin: [
+        "http://localhost:5173",
+        "http://localhost:5174",
+        "https://jobsphere-7a1c2.web.app"
+    ],
     credentials: true,
     optionSuccessStatus: true
 }
@@ -217,13 +221,18 @@ async function run() {
         app.get('/all-jobs', async (req, res) => {
             const page = parseInt(req.query.page) - 1
             const size = parseInt(req.query.size)
-            const filter = req.query.filter
-            console.log(page, size);
+            const sort = req.query.sort
+            const search = req.query.search
+            console.log(search);
 
-            let query = {}
-            if (filter) query = { category: filter }
+            let query = {
+                job_title: { $regex: search, $options: 'i' }
+            }
 
-            const result = await jobsCollection.find(query).skip(page * size).limit(size).toArray()
+            let options = {}
+            if (sort) options = { sort: { deadline: sort === 'asc' ? 1 : -1 } }
+
+            const result = await jobsCollection.find(query, options).skip(page * size).limit(size).toArray()
             res.status(200).send(result)
         })
 
@@ -232,8 +241,11 @@ async function run() {
         // get all job for pagination
         app.get('/jobs-count', async (req, res) => {
             const filter = req.query.filter
-            let query = {}
-            if (filter) query = { category: filter }
+            const search = req.query.search
+            let query = {
+                job_title: { $regex: search, $options: 'i' }
+            }
+            if (filter) query.category = filter
             const count = await jobsCollection.countDocuments(query)
             res.send({ count })
         })
