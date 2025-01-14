@@ -212,6 +212,33 @@ async function run() {
         })
 
 
+
+        // get all-job data
+        app.get('/all-jobs', async (req, res) => {
+            const page = parseInt(req.query.page) - 1
+            const size = parseInt(req.query.size)
+            const filter = req.query.filter
+            console.log(page, size);
+
+            let query = {}
+            if (filter) query = { category: filter }
+
+            const result = await jobsCollection.find(query).skip(page * size).limit(size).toArray()
+            res.status(200).send(result)
+        })
+
+
+
+        // get all job for pagination
+        app.get('/jobs-count', async (req, res) => {
+            const filter = req.query.filter
+            let query = {}
+            if (filter) query = { category: filter }
+            const count = await jobsCollection.countDocuments(query)
+            res.send({ count })
+        })
+
+
     } finally {
         // Ensures that the client will close when you finish/error
         // await client.close();
